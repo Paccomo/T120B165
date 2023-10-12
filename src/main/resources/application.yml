@@ -1,0 +1,21 @@
+server:
+  port: 256
+  error:
+    path: /error
+    include-stacktrace: never
+
+spring:
+  main:
+    web-application-type: servlet
+  datasource:
+    url: jdbc:mysql://localhost:3306/SRs_data
+    username: root
+    password: VerTice*
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect:  org.hibernate.dialect.MySQLDialect
+        format_sql: true
+    show-sql: true
