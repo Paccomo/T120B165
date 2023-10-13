@@ -107,7 +107,7 @@ public class InstructorController {
         return ResponseEntity.created(location).body(instructorToShow);
     }
 
-    @PutMapping("/{instructorId}")
+    @PatchMapping("/{instructorId}")
     public ResponseEntity<Object> editInstructor(@PathVariable("instructorId") Integer ID, @RequestBody NewInstructorRequest request){
         Optional<Instructor> instructorQuery = instructorRepository.findById(ID);
         if (instructorQuery.isEmpty()) {

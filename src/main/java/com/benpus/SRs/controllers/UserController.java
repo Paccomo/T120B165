@@ -88,7 +88,7 @@ public class UserController {
         return ResponseEntity.created(location).body(user);
     }
 
-    @PutMapping("/{userId}")
+    @PatchMapping("/{userId}")
     public ResponseEntity<Object> editUser(@PathVariable("userId") Integer ID, @RequestBody NewUserRequest request) throws NoSuchAlgorithmException {
         Optional<User> userQuery = userRepository.findById(ID);
         if (userQuery.isEmpty()) {

@@ -111,7 +111,7 @@ public class FirearmsController {
         return ResponseEntity.created(location).body(firearmToShow);
     }
 
-    @PutMapping("/{firearmId}")
+    @PatchMapping("/{firearmId}")
     public ResponseEntity<Object> editFirearm(@PathVariable("firearmId") Integer ID, @RequestBody NewFirearmRequest request){
         Optional<Firearm> firearmQuery = firearmRepository.findById(ID);
         if (firearmQuery.isEmpty()) {

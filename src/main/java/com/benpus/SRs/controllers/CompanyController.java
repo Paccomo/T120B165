@@ -148,7 +148,7 @@ public class CompanyController {
     }
 
 
-    @PutMapping("/{companyId}")
+    @PatchMapping("/{companyId}")
     public ResponseEntity<Object> editUser(@PathVariable("companyId") Integer ID, @RequestBody NewCompanyRequest request){
         Optional<Company> companyQuery = companyRepository.findById(ID);
         if (companyQuery.isEmpty()) {
