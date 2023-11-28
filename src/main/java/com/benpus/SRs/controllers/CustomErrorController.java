@@ -41,6 +41,8 @@ public class CustomErrorController implements ErrorController {
                 Map<String, String> responseBody = new HashMap<>();
                 responseBody.put("message", "Could not delete this entry because of foreign key constraint. Make sure to delete all entries referencing current one with foreign key!");
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(responseBody);
+            } else {
+                System.out.println("SRs klaida: "+ exception.toString());
             }
         }
         Map<String, String> responseBody = new HashMap<>();

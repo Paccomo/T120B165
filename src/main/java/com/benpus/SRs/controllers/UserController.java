@@ -5,6 +5,7 @@ import com.benpus.SRs.models.UserType;
 import com.benpus.SRs.repositories.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
@@ -61,15 +62,17 @@ public class UserController {
             return ResponseEntity.unprocessableEntity().body(responseBody);
         }
 
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
-        String encodedPass = Base64.getEncoder().encodeToString(hash);
+//        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+//        byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+//        String encodedPass = Base64.getEncoder().encodeToString(hash);
+
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
         User user = new User();
         user.setName(name);
         user.setSurname(surname);
         user.setEmail(email);
-        user.setPassword(encodedPass);
+        user.setPassword(encoder.encode(password));
         if (request.type.toUpperCase().equals(UserType.ADMIN.toString())) {
             user.setType(UserType.ADMIN);
         } else if (request.type.toUpperCase().equals(UserType.USER.toString())) {

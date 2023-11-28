@@ -179,7 +179,7 @@ public class ShootingRangeController {
         return ResponseEntity.created(location).body(rangeToShow);
     }
 
-    //TODO delete unused hours, fix hours DB, optional manufacturers for firearms, list requests
+    //TODO delete unused hours, fix hours DB, optional manufacturers for firearms
     @PatchMapping("/{rangeId}")
     public ResponseEntity<Object> editShootingRange(@PathVariable("rangeId") Integer ID, @RequestBody NewShootingRangeRequest request){
         Optional<ShootingRange> rangeQuery = shootingRangeRepository.findById(ID);

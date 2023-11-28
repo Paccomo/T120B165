@@ -10,7 +10,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/SRs_data
     username: root
-    password: VerTice*
+    password:
   jpa:
     hibernate:
       ddl-auto: update
