@@ -25,8 +25,18 @@ public class User implements UserDetails {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private UserType type;
+    @OneToMany(mappedBy = "user")
+    private List<Token> tokens;
 
     public User() {}
+
+    public List<Token> getTokens() {
+        return tokens;
+    }
+
+    public void setTokens(List<Token> tokens) {
+        this.tokens = tokens;
+    }
 
     public String getName() {
         return name;

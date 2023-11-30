@@ -1,2 +1,5 @@
-package com.benpus.SRs.models;public enum TokenType {
+package com.benpus.SRs.models;
+
+public enum TokenType {
+    BEARER
 }
