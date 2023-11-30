@@ -1,13 +1,16 @@
 package com.benpus.SRs.controllers;
 
 import com.benpus.SRs.DTOs.ShootingRangeDTO;
+import com.benpus.SRs.auth.JwtService;
 import com.benpus.SRs.models.*;
 import com.benpus.SRs.repositories.BusinessHoursRepository;
 import com.benpus.SRs.repositories.CompanyRepository;
 import com.benpus.SRs.repositories.ShootingRangeRepository;
+import com.benpus.SRs.repositories.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
+import jakarta.servlet.http.HttpServletRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,8 +31,10 @@ import java.util.regex.Pattern;
 @RequestMapping("api/v1/shootingRanges")
 public class ShootingRangeController {
     private final ShootingRangeRepository shootingRangeRepository;
-    public ShootingRangeController(ShootingRangeRepository shootingRangeRepository) {
+    private final JwtService jwtService;
+    public ShootingRangeController(ShootingRangeRepository shootingRangeRepository, JwtService jwtService) {
         this.shootingRangeRepository = shootingRangeRepository;
+        this.jwtService = jwtService;
     }
     record NewShootingRangeRequest(String address, String city, String isOutdoor, String price, String maxShooters, String fk_company, String tueOpen, String tueClose, String wedOpen, String wedClose, String thurOpen, String thurClose, String friOpen, String friClose, String satOpen, String satClose, String sunOpen, String sunClose, String monOpen, String monClose){}
     @Autowired
@@ -38,6 +43,8 @@ public class ShootingRangeController {
     private CompanyRepository companyRepository;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private UserRepository userRepository;
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -62,14 +69,34 @@ public class ShootingRangeController {
     }
 
     @GetMapping("/{rangeId}")
-    public ResponseEntity<Object> getShootingRange(@PathVariable("rangeId") Integer ID){
+    public ResponseEntity<Object> getShootingRange(@PathVariable("rangeId") Integer ID, HttpServletRequest request){
         Optional<ShootingRange> rangeQuery = shootingRangeRepository.findById(ID);
         if (rangeQuery.isEmpty()) {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Shooting range with specified ID was not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } else {
-            ShootingRangeDTO rangeToShow = modelMapper.map(rangeQuery.get(), ShootingRangeDTO.class);
+
+            ShootingRange shootingRange = rangeQuery.get();
+            Company cmp = companyRepository.findById(shootingRange.getFk_company().getId()).get();
+
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String jwt = authHeader.substring(7);
+                String userEmail = jwtService.extractUserEmail(jwt);
+                System.out.println(userEmail);
+                Optional<User> validationOptUser = userRepository.findByEmail(userEmail);
+                if (validationOptUser.isPresent()){
+                    User validationUser = validationOptUser.get();
+                    if (validationUser.getType() == UserType.USER && cmp.getFk_user() != validationUser){
+                        Map<String, String> response = new HashMap<>();
+                        response.put("message", "Shooting range with specified ID was not found");
+                        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+                    }
+                }
+            }
+
+            ShootingRangeDTO rangeToShow = modelMapper.map(shootingRange, ShootingRangeDTO.class);
             return ResponseEntity.ok(rangeToShow);
         }
     }
@@ -179,7 +206,7 @@ public class ShootingRangeController {
         return ResponseEntity.created(location).body(rangeToShow);
     }
 
-    //TODO delete unused hours, fix hours DB, optional manufacturers for firearms, list requests
+    //TODO delete unused hours, fix hours DB, optional manufacturers for firearms
     @PatchMapping("/{rangeId}")
     public ResponseEntity<Object> editShootingRange(@PathVariable("rangeId") Integer ID, @RequestBody NewShootingRangeRequest request){
         Optional<ShootingRange> rangeQuery = shootingRangeRepository.findById(ID);

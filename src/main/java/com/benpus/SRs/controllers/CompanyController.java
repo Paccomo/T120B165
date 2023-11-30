@@ -3,12 +3,18 @@ package com.benpus.SRs.controllers;
 import com.benpus.SRs.DTOs.CompanyDTO;
 import com.benpus.SRs.DTOs.FirearmDTO;
 import com.benpus.SRs.DTOs.InstructorDTO;
+import com.benpus.SRs.auth.JwtService;
 import com.benpus.SRs.models.*;
 import com.benpus.SRs.repositories.*;
+import io.jsonwebtoken.Jwt;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -21,8 +27,10 @@ import java.util.regex.Pattern;
 @RequestMapping("api/v1/companies")
 public class CompanyController {
     private final CompanyRepository companyRepository;
-    public CompanyController(CompanyRepository companyRepository){
+    private final JwtService jwtService;
+    public CompanyController(CompanyRepository companyRepository, JwtService jwtService){
         this.companyRepository = companyRepository;
+        this.jwtService = jwtService;
     }
     @Autowired
     private FirearmRepository firearmRepository;
@@ -37,14 +45,40 @@ public class CompanyController {
     private ModelMapper modelMapper;
 
     @GetMapping("/{companyID}/firearms")
-    public ResponseEntity<Object> getCompanyFirearms(@PathVariable("companyID") Integer ID){
+    public ResponseEntity<Object> getCompanyFirearms(@PathVariable("companyID") Integer ID, HttpServletRequest request){
+
+//        String authHeader = request.getHeader("Authorization");
+//        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+//            String jwt = authHeader.substring(7);
+//            String userEmail = jwtService.extractUserEmail(jwt);
+//            System.out.println(userEmail);
+//        }
         Optional<Company> companyQuery = companyRepository.findById(ID);
         if (companyQuery.isEmpty()) {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Company with specified ID was not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
-        List<ShootingRange> shootingRanges = rangeRepository.findByFkCompany(companyQuery.get());
+
+        Company cmp = companyQuery.get();
+
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String jwt = authHeader.substring(7);
+            String userEmail = jwtService.extractUserEmail(jwt);
+            System.out.println(userEmail);
+            Optional<User> validationOptUser = userRepository.findByEmail(userEmail);
+            if (validationOptUser.isPresent()){
+                User validationUser = validationOptUser.get();
+                if (validationUser.getType() == UserType.USER && cmp.getFk_user() != validationUser){
+                    Map<String, String> response = new HashMap<>();
+                    response.put("message", "Company with specified ID was not found");
+                    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+                }
+            }
+        }
+
+        List<ShootingRange> shootingRanges = rangeRepository.findByFkCompany(cmp);
         List<Firearm> firearms = new ArrayList<>();
         for (ShootingRange range : shootingRanges){
             List<Firearm> someFirearms = firearmRepository.findByfkShootingRange(range);
@@ -55,14 +89,33 @@ public class CompanyController {
     }
 
     @GetMapping("/{companyID}/instructors")
-    public ResponseEntity<Object> getCompanyInstructors(@PathVariable("companyID") Integer ID){
+    public ResponseEntity<Object> getCompanyInstructors(@PathVariable("companyID") Integer ID, HttpServletRequest request){
         Optional<Company> companyQuery = companyRepository.findById(ID);
         if (companyQuery.isEmpty()) {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Company with specified ID was not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
-        List<ShootingRange> shootingRanges = rangeRepository.findByFkCompany(companyQuery.get());
+
+        Company cmp = companyQuery.get();
+
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String jwt = authHeader.substring(7);
+            String userEmail = jwtService.extractUserEmail(jwt);
+            System.out.println(userEmail);
+            Optional<User> validationOptUser = userRepository.findByEmail(userEmail);
+            if (validationOptUser.isPresent()){
+                User validationUser = validationOptUser.get();
+                if (validationUser.getType() == UserType.USER && cmp.getFk_user() != validationUser){
+                    Map<String, String> response = new HashMap<>();
+                    response.put("message", "Company with specified ID was not found");
+                    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+                }
+            }
+        }
+
+        List<ShootingRange> shootingRanges = rangeRepository.findByFkCompany(cmp);
         List<Instructor> instructors = new ArrayList<>();
         for (ShootingRange range : shootingRanges){
             List<Instructor> someInstructors = instructorRepository.findByfkShootingRange(range);
@@ -80,14 +133,33 @@ public class CompanyController {
     }
 
     @GetMapping("/{companyId}")
-    public ResponseEntity<Object> getCompany(@PathVariable("companyId") Integer ID){
+    public ResponseEntity<Object> getCompany(@PathVariable("companyId") Integer ID, HttpServletRequest request){
         Optional<Company> companyQuery = companyRepository.findById(ID);
         if (companyQuery.isEmpty()) {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Company with specified ID was not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } else {
-            CompanyDTO companyToShow = modelMapper.map(companyQuery.get(), CompanyDTO.class);
+
+            Company cmp = companyQuery.get();
+
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String jwt = authHeader.substring(7);
+                String userEmail = jwtService.extractUserEmail(jwt);
+                System.out.println(userEmail);
+                Optional<User> validationOptUser = userRepository.findByEmail(userEmail);
+                if (validationOptUser.isPresent()){
+                    User validationUser = validationOptUser.get();
+                    if (validationUser.getType() == UserType.USER && cmp.getFk_user() != validationUser){
+                        Map<String, String> response = new HashMap<>();
+                        response.put("message", "Company with specified ID was not found");
+                        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+                    }
+                }
+            }
+
+            CompanyDTO companyToShow = modelMapper.map(cmp, CompanyDTO.class);
             return ResponseEntity.ok(companyToShow);
         }
     }
