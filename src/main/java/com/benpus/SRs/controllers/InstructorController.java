@@ -2,11 +2,13 @@ package com.benpus.SRs.controllers;
 
 import com.benpus.SRs.DTOs.FirearmDTO;
 import com.benpus.SRs.DTOs.InstructorDTO;
-import com.benpus.SRs.models.Firearm;
-import com.benpus.SRs.models.Instructor;
-import com.benpus.SRs.models.ShootingRange;
+import com.benpus.SRs.auth.JwtService;
+import com.benpus.SRs.models.*;
+import com.benpus.SRs.repositories.CompanyRepository;
 import com.benpus.SRs.repositories.InstructorRepository;
 import com.benpus.SRs.repositories.ShootingRangeRepository;
+import com.benpus.SRs.repositories.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,12 +27,18 @@ import java.util.regex.Pattern;
 @RequestMapping("api/v1/instructors")
 public class InstructorController {
     private final InstructorRepository instructorRepository;
-    public InstructorController(InstructorRepository instructorRepository) {
+    private final JwtService jwtService;
+    public InstructorController(InstructorRepository instructorRepository, JwtService jwtService) {
         this.instructorRepository = instructorRepository;
+        this.jwtService = jwtService;
     }
     record NewInstructorRequest(String name, String surname, String fk_shootingRange){}
     @Autowired
     private ShootingRangeRepository shootingRangeRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private CompanyRepository companyRepository;
     @Autowired
     private ModelMapper modelMapper;
 
@@ -42,14 +50,35 @@ public class InstructorController {
     }
 
     @GetMapping("/{instructorId}")
-    public ResponseEntity<Object> getInstructor(@PathVariable("instructorId") Integer ID){
+    public ResponseEntity<Object> getInstructor(@PathVariable("instructorId") Integer ID, HttpServletRequest request){
         Optional<Instructor> instructorQuery = instructorRepository.findById(ID);
         if (instructorQuery.isEmpty()) {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Instructor with specified ID was not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } else {
-            InstructorDTO instructorToShow = modelMapper.map(instructorQuery.get(), InstructorDTO.class);
+
+            Instructor instructor = instructorQuery.get();
+            ShootingRange shootingRange = shootingRangeRepository.findById(instructor.getFk_shootingRange().getId()).get();
+            Company cmp = companyRepository.findById(shootingRange.getFk_company().getId()).get();
+
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String jwt = authHeader.substring(7);
+                String userEmail = jwtService.extractUserEmail(jwt);
+                System.out.println(userEmail);
+                Optional<User> validationOptUser = userRepository.findByEmail(userEmail);
+                if (validationOptUser.isPresent()){
+                    User validationUser = validationOptUser.get();
+                    if (validationUser.getType() == UserType.USER && cmp.getFk_user() != validationUser){
+                        Map<String, String> response = new HashMap<>();
+                        response.put("message", "Instructor with specified ID was not found");
+                        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+                    }
+                }
+            }
+
+            InstructorDTO instructorToShow = modelMapper.map(instructor, InstructorDTO.class);
             return ResponseEntity.ok(instructorToShow);
         }
     }

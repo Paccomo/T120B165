@@ -8,9 +8,9 @@ spring:
   main:
     web-application-type: servlet
   datasource:
-    url: jdbc:mysql://localhost:3306/SRs_data
-    username: root
-    password:
+    url: jdbc:mysql://srs.mysql.database.azure.com:3306/SRs_data?useSSL=true
+    username: rootas
+    password: VerTice*
   jpa:
     hibernate:
       ddl-auto: update

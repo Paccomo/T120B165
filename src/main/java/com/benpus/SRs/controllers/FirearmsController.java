@@ -2,9 +2,13 @@ package com.benpus.SRs.controllers;
 
 import com.benpus.SRs.DTOs.CompanyDTO;
 import com.benpus.SRs.DTOs.FirearmDTO;
+import com.benpus.SRs.auth.JwtService;
 import com.benpus.SRs.models.*;
+import com.benpus.SRs.repositories.CompanyRepository;
 import com.benpus.SRs.repositories.FirearmRepository;
 import com.benpus.SRs.repositories.ShootingRangeRepository;
+import com.benpus.SRs.repositories.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,10 +27,18 @@ import java.util.regex.Pattern;
 @RequestMapping("api/v1/firearms")
 public class FirearmsController {
     private final FirearmRepository firearmRepository;
-    public FirearmsController(FirearmRepository firearmRepository){ this.firearmRepository = firearmRepository; }
+    private final JwtService jwtService;
+    public FirearmsController(FirearmRepository firearmRepository, JwtService jwtService){
+        this.firearmRepository = firearmRepository;
+        this.jwtService = jwtService;
+    }
     record NewFirearmRequest(String manufacturer, String model, String caliber, String picture, String price, String fk_shootingRange){}
     @Autowired
     private ShootingRangeRepository shootingRangeRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private CompanyRepository companyRepository;
     @Autowired
     private ModelMapper modelMapper;
 
@@ -38,14 +50,35 @@ public class FirearmsController {
     }
 
     @GetMapping("/{firearmId}")
-    public ResponseEntity<Object> getUser(@PathVariable("firearmId") Integer ID){
+    public ResponseEntity<Object> getUser(@PathVariable("firearmId") Integer ID, HttpServletRequest request){
         Optional<Firearm> firearmQuery = firearmRepository.findById(ID);
         if (firearmQuery.isEmpty()) {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Firearm with specified ID was not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } else {
-            FirearmDTO firearmToShow = modelMapper.map(firearmQuery.get(), FirearmDTO.class);
+
+            Firearm firearm = firearmQuery.get();
+            ShootingRange shootingRange = shootingRangeRepository.findById(firearm.getFk_shootingRange().getId()).get();
+            Company cmp = companyRepository.findById(shootingRange.getFk_company().getId()).get();
+
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String jwt = authHeader.substring(7);
+                String userEmail = jwtService.extractUserEmail(jwt);
+                System.out.println(userEmail);
+                Optional<User> validationOptUser = userRepository.findByEmail(userEmail);
+                if (validationOptUser.isPresent()){
+                    User validationUser = validationOptUser.get();
+                    if (validationUser.getType() == UserType.USER && cmp.getFk_user() != validationUser){
+                        Map<String, String> response = new HashMap<>();
+                        response.put("message", "Firearm with specified ID was not found");
+                        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+                    }
+                }
+            }
+
+            FirearmDTO firearmToShow = modelMapper.map(cmp, FirearmDTO.class);
             return ResponseEntity.ok(firearmToShow);
         }
     }
