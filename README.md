@@ -40,7 +40,7 @@ Sistemos administratorius galės:
    Sistema išskirstyta į dvi dalis – klientinę dalį ir serverio dalį. Klientinė dalis bus realizuota naudojant „React.js“. Serverio dalis – su „Java“ programavimo kalbai skirtu „Spring“ karkasu, bei „MySQL“ duomenų baze.
 
 
-![](readmeIMG/Aspose.Words.2c46b85e-9329-45a4-919c-17c866a4ed1a.00png)
+![](readmeIMG/Aspose.Words.2c46b85e-9329-45a4-919c-17c866a4ed1a.001.png)
 
 
 
