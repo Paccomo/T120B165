@@ -469,9 +469,3 @@ Sistemos administratorius galės:
 |Užklausos struktūra:|-|
 |Atsakymo struktūra:|-|
 |Galimi atsako kodai:|<p>- 204 (No Content)</p><p>- 403 (Forbidden) – draudžiama prieiga.</p><p>- 404 (Not Found) – blogas ginklo „id“.</p>|
-
-
- # <a name="_toc154158849"></a>**Išvados**
-- Projekto API buvo sėkmingai realizuotas.
-- Projekto autentifikacija ir autorizacija sukurta, tačiau yra vietų tobulinimui.
-- Grafinė sąsaja sukurta sėkmingai, atitinka nubrėžtą projektą.
